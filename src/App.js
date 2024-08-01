@@ -89,7 +89,7 @@ function App() {
   useEffect(() => {
     console.log(microphoneVolume);
 
-    if (microphoneVolume >= 30) {
+    if (microphoneVolume >= 35) {
       blowOutAllCandles();
     }
 
