@@ -4,12 +4,16 @@ import "./Cake.scss";
 import { useState, useEffect } from "react";
 import useMicrophone from "./UseMicrophone";
 import { randNumInRange, normRand } from "./utils/functions";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import Confetti from "react-confetti";
+import { useWindowSize } from "react-use";
 
 function App() {
   const [candlePositions, setCandlePositions] = useState([]);
   const { microphoneVolume, stopMicrophone } = useMicrophone();
   const [renderedCandles, setRenderedCandles] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const { width, height } = useWindowSize();
 
   const blowOutCandle = (candle) => {
     setCandlePositions((prevPositions) =>
@@ -88,11 +92,79 @@ function App() {
     if (microphoneVolume >= 30) {
       blowOutAllCandles();
     }
+
+    // Log the number of lit candles
+    console.log(
+      "Lit candles: ",
+      candlePositions.filter((candle) => candle.isLit)
+    );
   }, [microphoneVolume]); // Trigger the effect when the microphoneVolume changes
+
+  useEffect(() => {
+    // Check if there are no lit candles
+    const litCandles = candlePositions.filter((candle) => candle.isLit);
+    if (!litCandles.length && renderedCandles === candlePositions.length) {
+      setShowConfetti(true);
+    } else {
+      setShowConfetti(false);
+    }
+  }, [candlePositions, renderedCandles]); // Trigger the effect when candle positions or rendered candles change
+
+  useEffect(() => {
+    showConfetti &&
+      setTimeout(() => {
+        setShowConfetti(false);
+      }, 15000);
+  }, [showConfetti]);
 
   return (
     <>
-      <div className="flex justify-center">
+      <div className="flex flex-col justify-center">
+        <AnimatePresence>
+          {showConfetti && (
+            <div className="flex flex-col justify-center">
+              <Confetti
+                numberOfPieces={150}
+                gravity={0.2}
+                initialVelocityY={8}
+                initialVelocityX={5}
+                width={width}
+                height={height}
+                colors={["#FF6894", "#FF1493", "#FFB6C1"]}
+                drawShape={(ctx) => {
+                  ctx.beginPath();
+                  const scale = 0.6; // Adjust scale to fit the shape within the canvas
+                  for (let t = 0; t < Math.PI * 2; t += 0.01) {
+                    // Parametric equations for a heart
+                    const x = scale * 16 * Math.pow(Math.sin(t), 3);
+                    const y =
+                      -scale *
+                      (13 * Math.cos(t) -
+                        5 * Math.cos(2 * t) -
+                        2 * Math.cos(3 * t) -
+                        Math.cos(4 * t));
+                    ctx.lineTo(x, y);
+                  }
+                  ctx.fill(); // Fill the heart shape
+                  ctx.closePath();
+                }}
+              />
+              <div className="flex items-center justify-center h-screen">
+                <motion.div
+                  initial={{ y: -100, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  className="px-5 text-white relative items-center justify-center"
+                  style={{ position: "relative", bottom: "200px" }}
+                >
+                  <p className="capitalize font-medium lg:text-5xl md:text-3xl text-lg">
+                    happy national bubby day! 🎉
+                  </p>
+                </motion.div>
+              </div>
+            </div>
+          )}
+        </AnimatePresence>
+
         <div className="cake">
           <div className="plate"></div>
           <div className="layer layer-bottom"></div>
